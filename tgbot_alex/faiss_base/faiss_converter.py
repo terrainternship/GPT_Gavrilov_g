@@ -6,11 +6,12 @@ import os
 
 import openai
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.document_loaders import TextLoader
 from create_bot import OPENAI_API_KEY, FAISS_DB_DIR
 from config import TXT_DB_DIR, ROOT_DIR
+import tiktoken
 
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
@@ -39,18 +40,30 @@ def get_files(path=txt_db_dir):
     return files
 
 
+def num_tokens_from_string(string: str):
+      encoding = tiktoken.get_encoding("cl100k_base")
+      num_tokens = len(encoding.encode(string))
+      return num_tokens
+
+
 def create_faiss_indexes(path=txt_db_dir):
     all_txt_files = get_files()
     print(f'create_faiss_indexes: Проверим файлы в директории "{TXT_DB_DIR}": \n {all_txt_files}')
-    text_splitter = CharacterTextSplitter(chunk_size=1050, chunk_overlap=0)  # создали Сплиттер для разбиения на чанки
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["##_", "\n\n", "\n", " ", ""],
+        chunk_size=1024,
+        length_function=lambda x: num_tokens_from_string(x))  # создали Сплиттер для разбиения на чанки
+    
     embeddings = OpenAIEmbeddings()  # по умолчанию использует самую дешевую модель 'text-embedding-ada-002'
 
     for file in all_txt_files:
         print(f'Имя файла {get_file_name(file)}')
         local_path_to_base = os.path.join(faiss_db_dir, get_file_name(file))
-        loader = TextLoader(file)  # загрузили текстовый файл в loader
+        loader = TextLoader(file, encoding='utf-8')  # загрузили текстовый файл в loader
         document = loader.load()  # сделали из него документ
         split_doc = text_splitter.split_documents(document)  # с помощью сплиттера разбили документ на чанки
+        print(f'Количество чанков: {len(split_doc)}')
         db = FAISS.from_documents(split_doc, embeddings)
         db.save_local(local_path_to_base)
 
@@ -102,7 +115,7 @@ if __name__ == '__main__':
     faiss_indexes = get_bases()
     db = read_faiss_indexes(faiss_indexes)
 
-    query1 = "Как происходит перемещение контейнера"
+    query1 = "Какие самые главные принципы в управлении проектами?"
     docs1 = db.similarity_search(query1)
     print(f"{query1 =}")
     print(docs1[0].page_content)

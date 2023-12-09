@@ -23,7 +23,7 @@ class Logger:
         log_path = os.path.join(ROOT_DIR, LOG_PATH)
         log_file = f"{log_path}/{logging_service}.log"
         fh = logging.FileHandler(
-            log_file)  # создание объекта обработчика файла, который записывает логи в файл с именем "{logging_service}.log"
+            log_file, encoding='utf-8')  # создание объекта обработчика файла, который записывает логи в файл с именем "{logging_service}.log"
         fh.setLevel(logging.DEBUG)  # установка уровня логирования на DEBUG
         fh.setFormatter(formatter)  # установка форматирования для обработчика файла
         self.Logger.addHandler(fh)  # добавление обработчика файла в логгер

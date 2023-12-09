@@ -19,7 +19,7 @@ os.chdir(faiss_db_dir)
 # Прочитаем Системный промт из файла
 system_promt_file = os.path.join(ROOT_DIR, SETTINGS_PATH, SYSTEM_PROMT_FILE)
 try:
-    with open(system_promt_file, 'r') as file:
+    with open(system_promt_file, 'r', encoding='utf-8') as file:
         system_promt = file.read()
         logger.info(f'(Прочитали system-promt)')
         # logger.info(f'(Прочитали system-promt): {system_promt_file} - {system_promt}')
@@ -33,7 +33,7 @@ class WorkerOpenAI:
         # Прочитаем Системный промт из файла
         system_promt_file = os.path.join(ROOT_DIR, SETTINGS_PATH, SYSTEM_PROMT_FILE)
         try:
-            with open(system_promt_file, 'r') as file:
+            with open(system_promt_file, 'r', encoding='utf-8') as file:
                 system_promt = file.read()
                 logger.info(f'(Прочитали system-promt)')
                 # logger.info(f'(Прочитали system-promt): {system_promt_file} - {system_promt}')

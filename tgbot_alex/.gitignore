@@ -11,9 +11,6 @@
 # База индексов FAISS
 /faiss_indexes/*
 
-# текстовые базы знаний проекта :
-/txt_docs/*
-
 # Environments
 .env
 .prod_env
