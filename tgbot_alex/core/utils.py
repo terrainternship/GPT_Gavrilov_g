@@ -1,7 +1,8 @@
+import asyncio
 import os
 
 import pandas as pd
-from dbase.dbworker import get_df_users, get_df_history, create_db
+from dbase.dbworker import get_df_users, get_df_history, init_db, create_db
 from datetime import datetime
 import gspread
 import pygsheets
@@ -10,7 +11,8 @@ from logger.logger import logger
 
 # Google Sheets setup
 google_drive = None
-create_db()
+#init_db()
+#asyncio.run(create_db())
 
 
 def creat_new_google_sheets(name):

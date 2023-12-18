@@ -7,7 +7,7 @@ from datetime import datetime
 from core.utils import set_users_into_gsh
 from handlers import user_handler, admin_handler
 from create_bot import dp, bot
-from dbase.dbworker import create_db
+from dbase.dbworker import init_db, create_db
 
 #logger = logging.getLogger(__name__)      # старый логгер
 
@@ -33,6 +33,8 @@ async def on_startup(_):
 async def main():
     logger.info(f"Starting main")
 
+    await create_db()
+
     dp.include_router(admin_handler.router)
     logger.info(f"Router ADMIN is started")
     dp.include_router(user_handler.router)
@@ -48,5 +50,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    create_db()
+    init_db()
     asyncio.run(main())

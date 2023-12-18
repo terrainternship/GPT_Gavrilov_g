@@ -1,3 +1,4 @@
+import asyncio
 import sys
 
 from logger.logger import logger
@@ -140,9 +141,9 @@ class WorkerOpenAI:
             raise NotImplementedError(f"""num_tokens_from_messages() is not presently implemented for model {self.model}.
   See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
 
-    def get_chatgpt_answer(self, topic):
+    async def get_chatgpt_answer(self, topic):
         # Выборка документов по схожести с вопросом
-        docs = self.search_index.similarity_search(topic, k=8)
+        docs = await self.search_index.asimilarity_search(topic, k=8)
         #print(f'get_chatgpt_answer: {docs}')
         message_content = re.sub(r'\n{2}', ' ', '\n '.join(
             [f'\n==  ' + doc.page_content + '\n' for i, doc in enumerate(docs)]))
@@ -153,7 +154,7 @@ class WorkerOpenAI:
         ]
 
         # TODO: добавить вторую более дешевую модель. Выбирать модель в зависимости от объема передаваемого user_promt
-        completion = openai.ChatCompletion.create(
+        completion = await openai.ChatCompletion.acreate(
             model=self.model,
             messages=messages,
             temperature=TEMPERATURE
@@ -175,5 +176,5 @@ if __name__ == '__main__':
     # Если База данных embedding уже создана ранее
     print(f'{os.path.abspath(faiss_db_dir) = } ')
     curator = WorkerOpenAI(faiss_db_dir=faiss_db_dir)
-    answer = curator.get_chatgpt_answer(question)
+    answer = asyncio.run(curator.get_chatgpt_answer(question))
     print(answer)

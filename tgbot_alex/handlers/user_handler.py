@@ -33,7 +33,7 @@ welcome_message = "<b>Добро пожаловать!</b> 🙌🏻 \n\nЯ - п�
 
 @router.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message):
-    if not get_user_entry(message.from_user.id):
+    if not await get_user_entry(message.from_user.id):
         user_data = (
             message.from_user.id,
             None,
@@ -51,7 +51,7 @@ async def cmd_start(message: types.Message):
             0,
             0
         )
-        add_user(user_data)
+        await add_user(user_data)
         try:
             set_users_into_gsh()
             logger.info(
@@ -60,20 +60,20 @@ async def cmd_start(message: types.Message):
             logger.warning(
                 f"Ошибка добавления записи Пользователи: {error}")
         await message.reply(welcome_message + "\n\nЗадайте свой вопрос...", parse_mode='HTML')
-        update_dialog_state(message.from_user.id, 'start')
+        await update_dialog_state(message.from_user.id, 'start')
     else:
-        if get_dialog_state(message.from_user.id) == 'close':
+        if await get_dialog_state(message.from_user.id) == 'close':
             await bot.send_message(message.from_user.id, "Оцените предыдущий ответ чтобы продолжить использование "
                                                          "помощника.")
         else:
             await message.reply(welcome_message + "\n\nЗадайте свой вопрос...", parse_mode='HTML')
-            update_dialog_state(message.from_user.id, 'start')
-    dialog_status = get_dialog_state(message.from_user.id)
+            await update_dialog_state(message.from_user.id, 'start')
+    dialog_status = await get_dialog_state(message.from_user.id)
     #print(f'user_handler: cmd_start: {dialog_status = }')
     await asyncio.sleep(1)
 
 
-@router.message(lambda message: get_dialog_state(message.from_user.id) == 'close')
+@router.message(lambda message: asyncio.run(get_dialog_state(message.from_user.id)) == 'close')
 async def any_action(message: types.Message):
     await bot.send_message(message.from_user.id, "Оцените предыдущий ответ чтобы продолжить использование помощника.")
     await asyncio.sleep(1)
@@ -186,8 +186,8 @@ async def reset_context(message: types.Message):
 
 @router.callback_query(lambda c: c.data.startswith("drate_"))
 async def process_callback_qrating(callback_query: types.CallbackQuery):
-    if get_dialog_state(callback_query.from_user.id) == 'close':
-        user_data = get_user(callback_query.from_user.id)   # получим из БД информацию о пользователе
+    if await get_dialog_state(callback_query.from_user.id) == 'close':
+        user_data = await get_user(callback_query.from_user.id)   # получим из БД информацию о пользователе
         #print(f'process_callback_qrating: {user_data = }')
         score_chuncks = user_data[9]
         # print(f'process_callback_qrating: {score_chuncks = }')
@@ -200,10 +200,10 @@ async def process_callback_qrating(callback_query: types.CallbackQuery):
         else:
             await bot.send_message(callback_query.from_user.id, f"Спасибо за вашу оценку: {rating}! Можете задать "
                                                                 f"следующий вопрос (осталось "
-                                                                f"{int(10 - get_num_queries(callback_query.from_user.id))} запрос(ов).")
-        update_dialog_state(callback_query.from_user.id, 'finish')
+                                                                f"{int(10 - (await get_num_queries(callback_query.from_user.id)))} запрос(ов).")
+        await update_dialog_state(callback_query.from_user.id, 'finish')
         # Здесь сохраняется оценка пользователя для дальнейшего анализа или использования
-        update_dialog_score(callback_query.from_user.id, rating)
+        await update_dialog_score(callback_query.from_user.id, rating)
 
         # переда записью истории проверим содержимое user_data:
         # for i, item in enumerate(user_data):
@@ -225,7 +225,7 @@ async def process_callback_qrating(callback_query: types.CallbackQuery):
         # for i, item in enumerate(history_data):
         #     print(f'history_data[{i}]. {item}')
 
-        add_history(history_data)
+        await add_history(history_data)
         try:
             logger.info(
                 f"Оценка вопроса! Добаление записи в таблицу Оценка")
@@ -237,18 +237,18 @@ async def process_callback_qrating(callback_query: types.CallbackQuery):
     await asyncio.sleep(1)
 
 
-@router.message(lambda message: get_dialog_state(message.from_user.id) in ['start', 'finish'])
+@router.message(lambda message: asyncio.run(get_dialog_state(message.from_user.id)) in ['start', 'finish'])
 async def generate_answer(message: types.Message):
     #print(f'generate_answer: starting...')
-    update_last_interaction(message.from_user.id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    num_queries = get_num_queries(message.from_user.id)
+    await update_last_interaction(message.from_user.id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    num_queries = await get_num_queries(message.from_user.id)
     #print(f'generate_answer: {num_queries = }')
     if num_queries < 10 or message.from_user.id in ADMIN_CHAT_ID:       # ограничение по ответам: менее 10 ответов или админ - неограничено
         try:
             msg = await message.answer("Идет подготовка ответа. Ждите...⏳")  # msg["message_id"]
             time1 = datetime.now()
             logger.info(f"Запрос пошел: {message.text}")
-            completion, dialog, chunks = main_chatgpt.WorkerOpenAI().get_chatgpt_answer(message.text)
+            completion, dialog, chunks = await main_chatgpt.WorkerOpenAI().get_chatgpt_answer(message.text)
             #logger.info(f"Запрос вернулся: {completion}")
             logger.info(f"Запрос вернулся: [completion]")
             #content_to_print = dialog[1]['content']
@@ -259,13 +259,13 @@ async def generate_answer(message: types.Message):
             await msg.edit_text(completion.choices[0].message.content)
             #logger.info(f"ЦЕНА запроса: {0.0002 * (completion['usage']['total_tokens'] / 1000)}$\n {completion['usage']}")
             logger.info(f"ЦЕНА запроса: {0.004 * (completion['usage']['total_tokens'] / 1000)}$")
-            update_last_chunks(message.from_user.id, chunks)
-            update_last_dialog(message.from_user.id, json.dumps(dialog))
-            update_last_time_duration(message.from_user.id, int(duration.total_seconds()))
-            update_qa(message.from_user.id, (message.text, completion.choices[0].message.content))
-            update_dialog_state(message.from_user.id, 'close')
-            update_last_num_token(message.from_user.id, completion['usage']['total_tokens'])
-            update_num_queries(message.from_user.id, num_queries + 1)
+            await update_last_chunks(message.from_user.id, chunks)
+            await update_last_dialog(message.from_user.id, json.dumps(dialog))
+            await update_last_time_duration(message.from_user.id, int(duration.total_seconds()))
+            await update_qa(message.from_user.id, (message.text, completion.choices[0].message.content))
+            await update_dialog_state(message.from_user.id, 'close')
+            await update_last_num_token(message.from_user.id, completion['usage']['total_tokens'])
+            await update_num_queries(message.from_user.id, num_queries + 1)
             await asyncio.sleep(1)
             await message.answer("Пожалуйста, оцените качество консультации от -2 до 2:",
                                  reply_markup=drating_inline_buttons_keyboard())
