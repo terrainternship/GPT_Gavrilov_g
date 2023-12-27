@@ -1,0 +1,7 @@
+client_config_backend: file
+client_config_file: c:/Data/Study/NU/Stag_202312/Data/client_secrets.json
+oauth_scope:
+- https://www.googleapis.com/auth/drive
+save_credentials: true
+save_credentials_backend: file
+save_credentials_file:  c:/Data/Study/NU/Stag_202312/Data/test.json
