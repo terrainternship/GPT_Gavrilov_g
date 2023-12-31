@@ -11,9 +11,9 @@ from datetime import datetime
 from core.utils import set_users_into_gsh, save_data_to_google_sheets
 from create_bot import bot
 from core import main_chatgpt
-from dbase.dbworker import add_user, get_user_entry, update_last_interaction, update_last_dialog, get_user, \
-    update_dialog_state, update_dialog_score, add_history, get_dialog_state, update_last_num_token, update_qa, \
-    update_last_time_duration, get_num_queries, update_num_queries, update_last_chunks
+from dbase.models import User, History
+from dbase.repository import add_user, add_history, user_exists, get_user, update_last_interaction, \
+    update_dialog_state, update_dialog_state_and_score, update_dialog_statistics, get_dialog_state, get_num_queries
 from keyboards.user_keyboard import drating_inline_buttons_keyboard
 from bot import logger
 from handlers.admin_handler import ADMIN_CHAT_ID
@@ -33,14 +33,14 @@ welcome_message = "<b>Добро пожаловать!</b> 🙌🏻 \n\nЯ - п�
 
 @router.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message):
-    if not await get_user_entry(message.from_user.id):
-        user_data = (
+    if not await user_exists(message.from_user.id):
+        user = User(
             message.from_user.id,
             None,
             message.from_user.first_name,
             message.from_user.last_name,
             message.from_user.username,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            datetime.now(),
             None,
             None,
             None,
@@ -51,7 +51,7 @@ async def cmd_start(message: types.Message):
             0,
             0
         )
-        await add_user(user_data)
+        await add_user(user)
         try:
             set_users_into_gsh()
             logger.info(
@@ -187,9 +187,8 @@ async def reset_context(message: types.Message):
 @router.callback_query(lambda c: c.data.startswith("drate_"))
 async def process_callback_qrating(callback_query: types.CallbackQuery):
     if await get_dialog_state(callback_query.from_user.id) == 'close':
-        user_data = await get_user(callback_query.from_user.id)   # получим из БД информацию о пользователе
+        user = await get_user(callback_query.from_user.id)   # получим из БД информацию о пользователе
         #print(f'process_callback_qrating: {user_data = }')
-        score_chuncks = user_data[9]
         # print(f'process_callback_qrating: {score_chuncks = }')
         rating = int(callback_query.data[6:])
         #print(f'process_callback_qrating: {type(rating)}, {rating = }')
@@ -201,35 +200,34 @@ async def process_callback_qrating(callback_query: types.CallbackQuery):
             await bot.send_message(callback_query.from_user.id, f"Спасибо за вашу оценку: {rating}! Можете задать "
                                                                 f"следующий вопрос (осталось "
                                                                 f"{int(10 - (await get_num_queries(callback_query.from_user.id)))} запрос(ов).")
-        await update_dialog_state(callback_query.from_user.id, 'finish')
         # Здесь сохраняется оценка пользователя для дальнейшего анализа или использования
-        await update_dialog_score(callback_query.from_user.id, rating)
+        await update_dialog_state_and_score(callback_query.from_user.id, 'finish', rating)
 
         # переда записью истории проверим содержимое user_data:
         # for i, item in enumerate(user_data):
         #     print(f'User_data[{i}]. {item}')
 
         # Запись истории
-        history_data = (
+        history = History(
             callback_query.from_user.id,
             "question",
-            "\n".join([f'Пользователь: {user_data[7]}', f'Ассистент: {user_data[8]}']),
-            score_chuncks,
+            "\n".join([f'Пользователь: {user.last_question}', f'Ассистент: {user.last_answer}']),
+            user.last_chunks,
             rating,
-            user_data[10],
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            user_data[13]
+            user.last_num_token,
+            datetime.now(),
+            user.last_time_duration
         )
 
         # переда записью истории проверим содержимое history_data:
         # for i, item in enumerate(history_data):
         #     print(f'history_data[{i}]. {item}')
 
-        await add_history(history_data)
+        await add_history(history)
         try:
             logger.info(
                 f"Оценка вопроса! Добаление записи в таблицу Оценка")
-            save_data_to_google_sheets('Оценки', history_data)
+            save_data_to_google_sheets('Оценки', history)
         except Exception as error:
             logger.warning(
                 f"Ошибка добавления записи Оценки: {error}")
@@ -240,7 +238,7 @@ async def process_callback_qrating(callback_query: types.CallbackQuery):
 @router.message(lambda message: asyncio.run(get_dialog_state(message.from_user.id)) in ['start', 'finish'])
 async def generate_answer(message: types.Message):
     #print(f'generate_answer: starting...')
-    await update_last_interaction(message.from_user.id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    await update_last_interaction(message.from_user.id, datetime.now())
     num_queries = await get_num_queries(message.from_user.id)
     #print(f'generate_answer: {num_queries = }')
     if num_queries < 10 or message.from_user.id in ADMIN_CHAT_ID:       # ограничение по ответам: менее 10 ответов или админ - неограничено
@@ -259,13 +257,14 @@ async def generate_answer(message: types.Message):
             await msg.edit_text(completion.choices[0].message.content)
             #logger.info(f"ЦЕНА запроса: {0.0002 * (completion['usage']['total_tokens'] / 1000)}$\n {completion['usage']}")
             logger.info(f"ЦЕНА запроса: {0.004 * (completion['usage']['total_tokens'] / 1000)}$")
-            await update_last_chunks(message.from_user.id, chunks)
-            await update_last_dialog(message.from_user.id, json.dumps(dialog))
-            await update_last_time_duration(message.from_user.id, int(duration.total_seconds()))
-            await update_qa(message.from_user.id, (message.text, completion.choices[0].message.content))
-            await update_dialog_state(message.from_user.id, 'close')
-            await update_last_num_token(message.from_user.id, completion['usage']['total_tokens'])
-            await update_num_queries(message.from_user.id, num_queries + 1)
+            
+            last_chunks = '\n '.join([f'\n==  ' + doc.page_content + '\n' for doc in chunks])
+
+            await update_dialog_statistics(
+                message.from_user.id, json.dumps(dialog), message.text, completion.choices[0].message.content,
+                last_chunks, completion['usage']['total_tokens'], 'close', duration.total_seconds(), num_queries + 1
+            )
+
             await asyncio.sleep(1)
             await message.answer("Пожалуйста, оцените качество консультации от -2 до 2:",
                                  reply_markup=drating_inline_buttons_keyboard())

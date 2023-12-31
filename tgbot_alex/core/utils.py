@@ -2,7 +2,7 @@ import asyncio
 import os
 
 import pandas as pd
-from dbase.dbworker import get_df_users, get_df_history, init_db, create_db
+from dbase.repository import get_df_users, get_df_history
 from datetime import datetime
 import gspread
 import pygsheets
@@ -11,8 +11,6 @@ from logger.logger import logger
 
 # Google Sheets setup
 google_drive = None
-#init_db()
-#asyncio.run(create_db())
 
 
 def creat_new_google_sheets(name):
@@ -36,7 +34,8 @@ def share_google_sheets(email_address):
         logger.error(f'share_google_sheets: {e}')
 
 
-def save_data_to_google_sheets(sheet_name, data):
+# TODO: Нужно переделать новый параметр history
+def save_data_to_google_sheets(sheet_name, history):
     #print(f'save_data_to_google_sheets: Полный путь к файлу:{os.path.abspath(GSERVICEACCOUNTFILE)}')
     # if os.path.isfile(GSERVICEACCOUNTFILE):
     #     print(f"File exists {os.path.abspath(GSERVICEACCOUNTFILE)}")
@@ -47,7 +46,7 @@ def save_data_to_google_sheets(sheet_name, data):
         gc = gspread.service_account(filename=GSERVICEACCOUNTFILE)  # Авторизуемся в Google Sheets с помощью файла учетных данных GSERVICEACCOUNTFILE
         spreadsheet = gc.open_by_key(SHEETID_PARAM)                 # Открываем таблицу Google Sheets по ключу SHEETID_PARAM
         worksheet = spreadsheet.worksheet(sheet_name)               # Получаем лист таблицы по имени sheet_name
-        worksheet.append_row(data)                                  # Добавляем строку данных в конец листа
+        worksheet.append_row(history)                                  # Добавляем строку данных в конец листа
     except Exception as e:
         logger.error(f'save_data_to_google_sheets: {e}')
 

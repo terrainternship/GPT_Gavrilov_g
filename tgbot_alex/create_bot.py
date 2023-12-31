@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import SYSTEM_PROMT_FILE, FAISS_DB_DIR
 
-load_dotenv()
+load_dotenv(override=True)
 
 TOKEN = os.getenv("TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

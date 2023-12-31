@@ -65,4 +65,4 @@ class Logger:
 
 
 logger = Logger(enable_notifications=False)
-logger.info("Start loging")
+logger.info("Start logging")

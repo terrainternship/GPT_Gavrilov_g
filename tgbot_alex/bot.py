@@ -7,7 +7,7 @@ from datetime import datetime
 from core.utils import set_users_into_gsh
 from handlers import user_handler, admin_handler
 from create_bot import dp, bot
-from dbase.dbworker import init_db, create_db
+from dbase.database import init_db, create_db
 
 #logger = logging.getLogger(__name__)      # старый логгер
 
