@@ -27,7 +27,7 @@ TXT_DB_DIR = 'txt_docs'
 SETTINGS_PATH = 'settings'      # хранение внешних настроек, промтов
 
 # Настройки логирования:
-LOGGING_SERVICE = "aio_3"
+LOGGING_SERVICE = "gavrilov_bot"
 
 # путь до внешней папки с настройками уведомлений TG_bot
 APPRISE_CONFIG_PATH = "settings/apprise.yml"
