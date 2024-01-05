@@ -11,20 +11,35 @@
 """
 import os
 
+# Модели
 CHEAP_MODEL = 'gpt-3.5-turbo'
-EXPENSIVE_MODEL = 'gpt-3.5-turbo-16k'
+EXPENSIVE_MODEL = 'gpt-3.5-turbo-1106'
+# Используемая модель
+MODEL = EXPENSIVE_MODEL
+# Максимальное количество токенов модели
+MAX_TOKEN_LIMIT = 16385
+# Зарезервированное количество токенов для ответа
+MAX_TOKENS_FOR_ANSWER = 2048
+# Максимальное количество токенов для запроса к ChatGPT с учетом резерва для ответа
+MAX_TOKENS_FOR_REQUEST = MAX_TOKEN_LIMIT - MAX_TOKENS_FOR_ANSWER
+# Максимальная длительность диалога в часах
+MAX_DIALOG_PERIOD_IN_HOURS = 24
+# Температура 
 TEMPERATURE = 0.01
 
-# Промты
-SYSTEM_PROMT_FILE = 'system_promt.txt'
-USER_PROMT = "Analyze and use these tips in your answer: {}. Give a detailed correct answer to the Client's question: {}\nAnswer:"
+# Максимальная длина сообщения в Telegram
+TELEGRAM_MAX_MESSAGE_LENGTH = 4096
+
+# Промпты
+SYSTEM_PROMPT_FILE = 'system_prompt.txt'
+USER_PROMPT_FILE = 'user_prompt.txt'
 
 # папки и пути
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))   # Корневой каталог
 LOG_PATH = 'logs'               # хранение логов
 FAISS_DB_DIR = 'faiss_indexes'  # хранение индексов
 TXT_DB_DIR = 'txt_docs'
-SETTINGS_PATH = 'settings'      # хранение внешних настроек, промтов
+SETTINGS_PATH = 'settings'      # хранение внешних настроек, промптов
 
 # Настройки логирования:
 LOGGING_SERVICE = "aio_3"

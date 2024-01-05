@@ -47,6 +47,8 @@ class Logger:
             self.Logger.error(message)
         elif level == "debug":
             self.Logger.debug(message)
+        elif level == "exception":
+            self.Logger.exception(message)
 
         if notification and self.NotificationHandler.enabled:
             self.NotificationHandler.send_notification(str(message))
@@ -62,6 +64,9 @@ class Logger:
 
     def debug(self, message, notification=False):
         self.log(message, "debug", notification)
+
+    def exception(self, message, notification=True):
+        self.log(message, "exception", notification)
 
 
 logger = Logger(enable_notifications=False)

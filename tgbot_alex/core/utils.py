@@ -63,12 +63,12 @@ def set_report_into_gsh():
         sh = gc.open_by_key(SHEETID_PARAM)                          # Открываем таблицу Google Sheets по ключу SHEETID_PARAM
         # Заголовки столбцов
         columns_users = [                                           # Создаем список columns_users с заголовками столбцов таблицы "Пользователи"
-            'user_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries',
+            'id', 'tg_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries',
             'last_dialog', 'last_question', 'last_answer'
         ]
 
         columns_history = [                                         # Создаем список columns_history с заголовками столбцов таблицы "Оценки"
-            'user_id', 'score_name', 'score_text', 'score_chunks', 'score', 'num_token', 'date_estimate',
+            'user_id', 'score_name', 'score_text', 'score_chunks', 'score', 'num_token', 'score_time',
             'time_duration'
         ]
 
@@ -103,7 +103,7 @@ def set_users_into_gsh():
         sh = gc.open_by_key(SHEETID_PARAM)
         # Заголовки столбцов
         columns_users = [
-            'user_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries'
+            'id', 'tg_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries'
         ]
         df_users = get_df_users()[columns_users]
         df_users['num_queries'] = df_users['num_queries'].astype(int)
@@ -121,11 +121,11 @@ def get_report():
 
     # Заголовки столбцов
     columns_users = [
-        'user_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries'
+        'id', 'tg_id', 'e_mail', 'first_name', 'last_name', 'username', 'last_interaction', 'num_queries'
     ]
 
     columns_history = [
-        'user_id', 'score_name', 'score_text', 'score', 'score_chunck', 'num_token', 'date_estimate', 'time_duration'
+        'user_id', 'score_name', 'score_text', 'score', 'score_chunck', 'num_token', 'score_time', 'time_duration'
     ]
 
     sheet_name = ['Пользователи', 'Оценки']
@@ -136,7 +136,7 @@ def get_report():
 
     df_users = get_df_users()[columns_users]
     df_score = get_df_history()[columns_history]
-    name_report = f'report_Bot_Agent5_01_{datetime.now().strftime("%d.%m.%Y_%H.%M.%S")}.xlsx'
+    name_report = f'report_Bot_Agent5_01_{datetime.utcnow().strftime("%d.%m.%Y_%H.%M.%S")}.xlsx'
     with pd.ExcelWriter(name_report) as writer:
         workbook = writer.book
         df_users.to_excel(writer, sheet_name=sheet_name[0], index=False)

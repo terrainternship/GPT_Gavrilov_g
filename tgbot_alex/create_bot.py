@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from config import SYSTEM_PROMT_FILE, FAISS_DB_DIR
+from config import SYSTEM_PROMPT_FILE, FAISS_DB_DIR
 
 load_dotenv(override=True)
 
@@ -19,7 +19,7 @@ POSTGRE_PASSW=os.getenv('POSTGRE_PASSW')
 POSTGRE_PORT=os.getenv('POSTGRE_PORT')
 
 
-#SYSTEM_PROMT_FILE = os.getenv("SYSTEM_PROMT_FILE")
+#SYSTEM_PROMPT_FILE = os.getenv("SYSTEM_PROMPT_FILE")
 #FAISS_DB_DIR = os.getenv("FAISS_DB_DIR")
 storage = MemoryStorage()
 

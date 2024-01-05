@@ -7,8 +7,8 @@ import os
 import openai
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
-from langchain.document_loaders import TextLoader
+from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import TextLoader
 from create_bot import OPENAI_API_KEY, FAISS_DB_DIR
 from config import TXT_DB_DIR, ROOT_DIR
 import tiktoken

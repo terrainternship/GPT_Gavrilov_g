@@ -11,7 +11,7 @@ router = Router()  # [1]
 
 # добавляй админов тут:
 ADMIN_CHAT_ID = [
-    412539319,  # el_prosto
+    412539319, 1612759951 # el_prosto
 ]
 
 
@@ -34,5 +34,4 @@ async def callback_export(callback_query: types.CallbackQuery):
         os.remove(report_name)
     except Exception as e:
         print(f'Ошибка удаления отчета {e}')
-    await asyncio.sleep(1)
 
