@@ -6,7 +6,7 @@ from logger.logger import logger
 from config import ROOT_DIR, SETTINGS_PATH, FAISS_DB_DIR, SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, MODEL, TEMPERATURE, \
     MAX_TOKENS_FOR_REQUEST, MAX_TOKENS_FOR_ANSWER, TELEGRAM_MAX_MESSAGE_LENGTH
 from create_bot import OPENAI_API_KEY
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from openai import AsyncOpenAI
 import tiktoken
